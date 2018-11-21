@@ -1,0 +1,61 @@
+<html>
+  <head>
+    <link rel="icon" href="data:,">
+    <script src="https://aframe.io/releases/0.8.0/aframe.min.js"></script>
+    <script>
+      composePathFromNumber = (num) => ("./assets/0" + num + ".jpg");
+
+      // preload images
+      const IMAGE_AMOUNT = 9;
+      preloadImage = (url) => { (new Image()).src = url };
+      (preloadImages = () => {
+        Array.from({length: IMAGE_AMOUNT}).forEach((_, idx) => {
+          const imgNum = idx+1;
+          preloadImage(composePathFromNumber(imgNum));
+        })
+      })();
+
+      getDegrees = (num) => ( num >= 0 ? ( parseInt(num) % 360 ) : ((parseInt(num) % 360)) +360 );
+      isLookingLeft = (degrees) => (degrees > 70 && degrees < 110);
+      isLookingRight = (degrees) => (degrees < 280 && degrees > 240);
+      resolveImgNumFromPath = (path) => (parseInt(path.split("assets/")[1].split(".")[0]));
+      resolveDirectionFromNumber = (num) => (num % 2 ? "left" : "right");
+
+      AFRAME.registerComponent('rotation-reader', {
+        tick: function () {
+          // debug y rotation
+          let rotation = this.el.getAttribute('rotation');
+          let debugTextEl = document.getElementById('debugText');
+          debugTextEl.setAttribute('value', getDegrees(rotation.y));
+                    
+          const degrees = getDegrees(rotation.y);
+          let skyEl = document.getElementById('sky');
+          const currentImgNumber = resolveImgNumFromPath(skyEl.getAttribute('src'));
+          if (
+            isLookingRight(degrees) && 
+            resolveDirectionFromNumber(currentImgNumber) === "left" && 
+            currentImgNumber < IMAGE_AMOUNT 
+            ) {
+            const nextImgNumber = currentImgNumber + 1;
+            skyEl.setAttribute('src', composePathFromNumber(nextImgNumber));
+          } else if (
+            isLookingLeft(degrees) && 
+            resolveDirectionFromNumber(currentImgNumber) === "right" && 
+            currentImgNumber < IMAGE_AMOUNT 
+            ) {
+            const nextImgNumber = currentImgNumber + 1;
+            skyEl.setAttribute('src', composePathFromNumber(nextImgNumber));
+          }
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <a-scene>
+      <a-camera rotation-reader>
+          <a-text id="debugText" value="" position="-0.2 -0.5 -1" color="red" width="5" anchor="left"></a-text>
+      </a-camera>
+      <a-sky id="sky" src="./assets/01.jpg" rotation="0 -90 0"></a-sky>
+    </a-scene>
+  </body>
+</html>
